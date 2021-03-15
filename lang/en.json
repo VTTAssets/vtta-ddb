@@ -1,0 +1,15 @@
+{
+  "SETTING.SECTION.compendium.label": "Compendium Settings",
+  "SETTING.SECTION.compendium.description": "These settings are related to compendiums used to store incoming entities. **It is strongly recommended to use a dedicated Shared Module for such tasks**, watch [this video](https://www.vtta.io) for more information.",
+  "SETTING.sceneImageDirectory.label": "Target directory for scene-related images",
+  "SETTING.sceneImageDirectory.hint": "Select a directory that serves as the root directory for all images related to **scenes**. This includes the background image for the scene and all related icons for Journal Entries and the like.",
+  "SETTING.itemImageDirectory.label": "Target directory for item-related images",
+  "SETTING.itemImageDirectory.hint": "Select a directory that serves as the root directory for all images related to **items**.",
+  "SETTING.itemCompendium.label": "Target compendium for Items",
+  "SETTING.itemCompendium.hint": "Select the target compendium you intend to use for all items **besides spells**: weapons, armor, loot, consumables...",
+  "SETTING.spellCompendium.label": "Target compendium for Spells",
+  "SETTING.spellCompendium.hint": "Select the target compendium you intend to use for spells.",
+  "SETTING.monsterCompendium.label": "Target compendium for Monsters",
+  "SETTING.monsterCompendium.hint": "Select the target compendium you intend to use for monsters.",
+  "NOTE.VTTACustomLabel": "VTTA Custom Label"
+}

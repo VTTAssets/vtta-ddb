@@ -1,0 +1,21 @@
+#scenes > ol > li > h3 > a {
+  line-height: 100px !important;
+}
+
+div.app.journal-sheet .editor-content {
+  a.ddb-reference {
+    background-image: url(../img/ddb-icon.png);
+    background-repeat: no-repeat;
+    background-size: contain;
+    display: inline-block;
+    height: 20px;
+    padding-left: 20px;
+    position: relative;
+    top: 5px;
+  }
+
+  table th {
+    white-space: nowrap;
+    min-width: 30px;
+  }
+}
