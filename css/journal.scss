@@ -1,29 +1,46 @@
-div.journal-sheet div.vtta-image-container {
-  position: relative;
+div.journal-sheet {
+  div.vtta-image-container {
+    position: relative;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border: 10px solid #f9f9f9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    border: 10px solid #f9f9f9;
 
-  a.vtta-button {
-    max-width: 255px;
-    background: #2f0000d6;
-    box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.5);
-    border-radius: 3px;
-    margin-left: 10px;
-    display: block;
-    padding: 8px 16px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
+    a.vtta-button {
+      max-width: 255px;
+      background: #2f0000d6;
+      box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.5);
+      border-radius: 3px;
+      margin-left: 10px;
+      display: block;
+      padding: 8px 16px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
 
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: auto;
-    transform: translate(-20px, 20px);
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: auto;
+      transform: translate(-20px, 20px);
+    }
+  } 
+
+  a.vtta.roll {
+    display: inline-block;
+    background-image: url(../img/vtta.io-dice-64x64.png);
+    background-size: contain;
+    width: 20px;
+    height: 20px;
+    position: relative;
+    top: 5px;
+    margin: 0 0.25rem;
+  }
+
+  button:hover {
+    box-shadow: none;
   }
 }
 

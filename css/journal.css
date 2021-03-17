@@ -31,6 +31,20 @@ div.journal-sheet div.vtta-image-container a.vtta-button {
   -webkit-transform: translate(-20px, 20px);
           transform: translate(-20px, 20px);
 }
+div.journal-sheet a.vtta.roll {
+  display: inline-block;
+  background-image: url(../img/vtta.io-dice-64x64.png);
+  background-size: contain;
+  width: 20px;
+  height: 20px;
+  position: relative;
+  top: 5px;
+  margin: 0 0.25rem;
+}
+div.journal-sheet button:hover {
+  -webkit-box-shadow: none;
+          box-shadow: none;
+}
 
 div.vtta-image-popout {
   display: none;

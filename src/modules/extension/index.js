@@ -2,6 +2,7 @@ import config from "../../config/index.js";
 import logger from "../../util/logger.js";
 import query from "./query/index.js";
 import add from "./add/index.js";
+import postprocess from "./postprocess/index.js";
 import connect from "./connect/index.js";
 import CONSTANTS from "../../config/CONSTANTS.js";
 
@@ -35,6 +36,8 @@ export default () => {
       case "ADD":
         response = await limiter.schedule(() => add(message));
         break;
+      case "POSTPROCESS":
+        response = await postprocess(message);
       case "NEWWORLD":
         const isNewish =
           game.actors.entities.length < 10 && game.scenes.entities.length < 3;

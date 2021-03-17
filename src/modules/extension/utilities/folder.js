@@ -1,4 +1,15 @@
-const createFolder = (entityType, name, parent = null) => {
+const FOLDER_COLORS = new Map();
+FOLDER_COLORS.set("DEFAULT.LEVEL1", "#520000");
+FOLDER_COLORS.set("DEFAULT.LEVEL2", "#750000");
+FOLDER_COLORS.set("DEFAULT.LEVEL3", "#8f0000");
+FOLDER_COLORS.set("SCENE.LEVEL1", "#000a2e");
+FOLDER_COLORS.set("SCENE.LEVEL1", "#000f47");
+FOLDER_COLORS.set("SCENE.LEVEL1", "#001666");
+FOLDER_COLORS.set("FALLBACK", "#111111");
+
+const createFolder = (entityType, name, parent = null, color) => {
+  if (!color) color = FOLDER_COLORS.get("FALLBACK");
+
   const folder = game.folders.entities.find(
     (folder) =>
       folder.data.name === name &&
@@ -10,6 +21,7 @@ const createFolder = (entityType, name, parent = null) => {
       name: name,
       type: entityType,
       parent: parent === null ? parent : parent.data._id,
+      color: color,
       sort: 30000,
     };
     return Folder.create(folderData, { displaySheet: false });
@@ -26,8 +38,17 @@ const traverse = async (entityType, folderStructure) => {
   const unique = [...new Set(firstLevels)];
 
   for (let firstLevel of unique) {
+    let folderType = "DEFAULT";
+    if (firstLevel === "Scenes") {
+      folderType = "SCENE";
+    }
     // folders.push(firstLevel);
-    const firstLevelFolder = await createFolder(entityType, firstLevel, null);
+    const firstLevelFolder = await createFolder(
+      entityType,
+      firstLevel,
+      null,
+      FOLDER_COLORS.get(`${folderType}.LEVEL1`)
+    );
 
     const secondLevels = folderStructure.filter(
       (arr) => arr[0] === firstLevel && arr.length > 1
@@ -39,7 +60,8 @@ const traverse = async (entityType, folderStructure) => {
       const secondLevelFolder = await createFolder(
         entityType,
         secondLevel,
-        firstLevelFolder
+        firstLevelFolder,
+        FOLDER_COLORS.get(`${folderType}.LEVEL2`)
       );
 
       const thirdLevels = folderStructure.filter(
@@ -53,7 +75,8 @@ const traverse = async (entityType, folderStructure) => {
         const thirdLevelFolder = await createFolder(
           entityType,
           thirdLevel,
-          secondLevelFolder
+          secondLevelFolder,
+          FOLDER_COLORS.get(`${folderType}.LEVEL3`)
         );
       }
     }

@@ -5,7 +5,6 @@ import { createFolders, getFolder } from "../utilities/folder.js";
 
 import logger from "../../../util/logger.js";
 
-import postProcessJournals from "./postProcessJournals.js";
 import processScene from "./processScene.js";
 
 const SKIP_COMPENDIUM_MAINTENANCE = true;
@@ -57,9 +56,13 @@ export default async (message) => {
 
   // Max 3 requests/second, one at a time
   const limiter = new Bottleneck({
-    maxConcurrent: 3,
-    minTime: 200,
+    maxConcurrent: 10,
+    minTime: 100,
   });
+  // const limiter = new Bottleneck({
+  //   maxConcurrent: 3,
+  //   minTime: 200,
+  // });
 
   const progressId = window.vtta.ui.ProgressBar.show(
     "Entities to process",
@@ -91,33 +94,35 @@ export default async (message) => {
     });
 
     // get the compendium for this kind of entity
-    const compendium = getCompendium(type);
+    // const compendium = getCompendium(type);
 
-    // For now we are skipping updating the compendium because a)
-    // a) it takes ages
+    // For now we are skipping updating the compendium because
+    // a) I will need some user feedback on how they want to use the tools
+    // Currently, I am leaning very heavily to use D&D Beyond as our compendium
+
     // b) I have an idea to Hook on the
     //     Hooks.on("create[Entity] and update[Entity] and to maintain sync there")
-    if (!SKIP_COMPENDIUM_MAINTENANCE && compendium) {
-      compendium.locked = false;
-      // get all existing entities matching the slugs
-      let existing = await queryCompendium(compendium, slugs);
+    // if (!SKIP_COMPENDIUM_MAINTENANCE && compendium) {
+    //   compendium.locked = false;
+    //   // get all existing entities matching the slugs
+    //   let existing = await queryCompendium(compendium, slugs);
 
-      // either update or create all entities in the message
-      await Promise.all(
-        entities.map((entity) => {
-          // check if the one exists already
-          const entry = existing.find(
-            (e) => e.flags.vtta.id === entity.flags.vtta.id
-          );
-          if (entry !== undefined) {
-            entity._id = entry._id;
-            return limiter.schedule(() => compendium.updateEntity(entity));
-          } else {
-            return limiter.schedule(() => compendium.createEntity(entity));
-          }
-        })
-      );
-    }
+    //   // either update or create all entities in the message
+    //   await Promise.all(
+    //     entities.map((entity) => {
+    //       // check if the one exists already
+    //       const entry = existing.find(
+    //         (e) => e.flags.vtta.id === entity.flags.vtta.id
+    //       );
+    //       if (entry !== undefined) {
+    //         entity._id = entry._id;
+    //         return limiter.schedule(() => compendium.updateEntity(entity));
+    //       } else {
+    //         return limiter.schedule(() => compendium.createEntity(entity));
+    //       }
+    //     })
+    //   );
+    // }
 
     // create the necessary folders
     await createFolders(message.data);
@@ -128,6 +133,11 @@ export default async (message) => {
       entities.map((entity) => {
         // remove the ID from the compendium import that might have happened prior to this call
         delete entity._id;
+
+        console.log("----- PROCESSING ENTITY -------------------");
+        console.log("Entity type: " + entity.type);
+        console.log("Type: " + type);
+        console.log("-------------------------------------------");
 
         // pre-process Scenes:
         if (entity.type === "scene") {
@@ -174,20 +184,34 @@ export default async (message) => {
                 .then((folder) => {
                   entity.folder = folder._id;
 
-                  if (type === "monsters") {
-                    if (!entity.img) entity.img = DEFAULT_TOKEN;
-                    logger.info("Creating actor", entity);
-                    limiter
-                      .schedule(() => getEntityClass(entity).create(entity))
-                      .then((actor) => {
-                        resolve(actor);
-                      });
-                  } else {
-                    resolve(
-                      limiter.schedule(() =>
-                        getEntityClass(entity).create(entity)
-                      )
-                    );
+                  switch (type) {
+                    case "monsters":
+                      if (!entity.img) entity.img = DEFAULT_TOKEN;
+                      logger.info("Creating actor", entity);
+                      limiter
+                        .schedule(() => getEntityClass(entity).create(entity))
+                        .then((actor) => {
+                          resolve(actor);
+                        });
+                      break;
+                    case "tables":
+                      // We need a description since it's displayed when rolled, otherwise a nasty "undefined" is displayed
+                      if (!entity.description) entity.description = entity.name;
+                      // Default to the vtta.io dice img
+                      entity.img =
+                        "modules/vtta-ddb/img/vtta.io-dice-64x64.png";
+                      resolve(
+                        limiter.schedule(() =>
+                          getEntityClass(entity).create(entity)
+                        )
+                      );
+                      break;
+                    default:
+                      resolve(
+                        limiter.schedule(() =>
+                          getEntityClass(entity).create(entity)
+                        )
+                      );
                   }
                 })
                 .catch((error) => {
@@ -195,6 +219,7 @@ export default async (message) => {
                     "Error getting the folder/ creating the entity",
                     entity
                   );
+                  logger.error("Error Message", entity);
                 });
             }
           });
@@ -202,13 +227,7 @@ export default async (message) => {
       })
     );
   }
-
-  // Post process Journal Entries (linking and stuff);
-  await postProcessJournals(message.data);
-
   window.vtta.ui.ProgressBar.hide(progressId);
-
-  window.vtta.journals = postProcessJournals;
 
   return {
     type: "ADD_RESPONSE",

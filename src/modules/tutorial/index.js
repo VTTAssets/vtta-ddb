@@ -1,2 +1,4 @@
-import { setup, connectToFoundry } from "./tutorials/index.js";
-export { tutorialSetup, tutorialConnectToFoundry };
+import setup from "./tutorials/setup.js";
+import connectToFoundry from "./tutorials/connectToFoundry.js";
+
+export default { setup, connectToFoundry };

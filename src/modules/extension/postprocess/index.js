@@ -1,13 +1,51 @@
-import { capitalize } from "../../../util/string.js";
+import { slugify } from "../../../util/string.js";
 
-const postProcessJournals = async (entities) => {
+const postProcessJournals = async (ids) => {
   const replaceStringByString = (str, search, replace, index) => {
     const start = str.substring(0, index);
     const end = str.substring(index + search.length);
     return `${start}${replace}${end}`;
   };
 
-  const postProcessJournal = async (journalId) => {
+  const prepareSystemDictionary = async () => {
+    const loadSystemCompendia = async () => {
+      const dict = {
+        monsters: game.packs.get("dnd5e.monsters"),
+        spells: game.packs.get("dnd5e.spells"),
+        items: game.packs.get("dnd5e.items"),
+      };
+      for (let prop in dict) {
+        await dict[prop].getIndex();
+      }
+
+      return dict;
+    };
+
+    const dict = await loadSystemCompendia();
+    //  @Compendium[dnd5e.classfeatures.kYJsED0rqqqUcgKz]{Additional Fighting Style}
+
+    return {
+      lookup: (slug) => {
+        console.log("Fallback for " + slug);
+        const [type, slugifiedName] = slug.split("/");
+
+        if (dict[type] && dict[type].index) {
+          const entry = dict[type].index.find(
+            (entry) => slugify(entry.name) === slugifiedName
+          );
+
+          if (entry) {
+            const fallback = `@Compendium[${dict[type].collection}.${entry._id}]`;
+            console.log("Fallback found: " + fallback);
+            return { ref: fallback, name: entry.name };
+          }
+        }
+        return null;
+      },
+    };
+  };
+
+  const postProcessJournal = async (journalId, dictionary) => {
     const journalEntry = game.journal.entities.find(
       (journal) =>
         journal.data.flags &&
@@ -69,10 +107,22 @@ const postProcessJournals = async (entities) => {
           console.error(error);
         }
       } else {
-        // if the occurence is not yet replaced, we will do it now
-        const replacement = `${text}`;
-        content = replaceStringByString(content, full, replacement, index);
-        regex.lastIndex -= full.length - replacement.length;
+        // let's try the fallback
+        const fallback = dictionary.lookup(slug);
+        if (fallback !== null) {
+          const replacement = `${fallback.ref}{${text ? text : fallback.name}}`;
+          try {
+            content = replaceStringByString(content, full, replacement, index);
+            regex.lastIndex -= full.length - replacement.length;
+          } catch (error) {
+            console.error(error);
+          }
+        } else {
+          // if the occurence is not yet replaced, we will do it now
+          const replacement = `${text}`;
+          content = replaceStringByString(content, full, replacement, index);
+          regex.lastIndex -= full.length - replacement.length;
+        }
       }
     }
 
@@ -82,9 +132,9 @@ const postProcessJournals = async (entities) => {
     }
   };
 
-  const ids = entities
-    .filter((entity) => entity.type === "journal")
-    .map((entity) => entity.flags.vtta.id);
+  // const ids = entities
+  //   .filter((entity) => entity.type === "journal")
+  //   .map((entity) => entity.flags.vtta.id);
 
   if (ids.length === 0) return true;
 
@@ -94,7 +144,7 @@ const postProcessJournals = async (entities) => {
     minTime: 100,
   });
   const progressId = window.vtta.ui.ProgressBar.show(
-    "Relinking Journal Entries",
+    "Post-Processing Journal Entries",
     0,
     ids.length
   );
@@ -111,8 +161,10 @@ const postProcessJournals = async (entities) => {
     window.vtta.ui.ProgressBar.addValue(progressId, 1);
   });
 
+  const dictionary = await prepareSystemDictionary();
+
   await Promise.all(
-    ids.map((id) => limiter.schedule(() => postProcessJournal(id)))
+    ids.map((id) => limiter.schedule(() => postProcessJournal(id, dictionary)))
   );
 
   window.vtta.ui.ProgressBar.addValue(progressId, 1);
@@ -121,4 +173,10 @@ const postProcessJournals = async (entities) => {
   return true;
 };
 
-export default postProcessJournals;
+export default async (message) => {
+  await postProcessJournals(message.data);
+  return {
+    type: "POSTPROCESS_RESPONSE",
+    data: message.data.length,
+  };
+};
