@@ -86,11 +86,20 @@ const processScene = async (scene) => {
   );
 
   // each note needs a position and a label. This is ensured by the processing instruction for each scene on the parser
-  let notes = scene.journals.filter(
-    (note) => note.x !== undefined && note.y !== undefined && note.label
-  );
+  // let notes = scene.journals.filter(
+  //   (note) => note.x !== undefined && note.y !== undefined && note.label
+  // );
 
-  notes = notes.map((note) => {
+  const SCENE_PADDING = {
+    left: Math.ceil((0.25 * scene.width) / scene.grid) * scene.grid,
+    top: Math.ceil((0.25 * scene.height) / scene.grid) * scene.grid,
+  };
+  // adjust the size of the note
+  const NOTE_ICON_SIZE = Math.ceil(scene.grid * 0.8);
+  const NOTE_ICON_PADDING = Math.ceil((scene.grid - NOTE_ICON_SIZE) / 2);
+
+  // create used labels, and place them if we got x/y coordinates for them
+  let notes = scene.journals.map(async (note, index) => {
     return new Promise((resolve, reject) => {
       let journal = journals.find(
         (journal) => journal.data.flags.vtta.id === note.id
@@ -98,11 +107,18 @@ const processScene = async (scene) => {
       if (journal) {
         // upload the label for it
         Label.create("" + note.label).then((label) => {
+          if (note.x === undefined || note.y === undefined) {
+            // Put them in the upper left corner of the map
+            note.x =
+              SCENE_PADDING.left + index * scene.grid + NOTE_ICON_PADDING;
+            note.y = SCENE_PADDING.top + NOTE_ICON_PADDING;
+          }
           const data = {
             entryId: journal._id,
             icon: label,
             x: note.x,
             y: note.y,
+            iconSize: NOTE_ICON_SIZE,
           };
           resolve(data);
         });

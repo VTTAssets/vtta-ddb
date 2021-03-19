@@ -19,7 +19,7 @@ const createLabel = (text) => {
         config.paths.labels
       }`;
 
-      const OVERWRITE_EXISTING = false;
+      const OVERWRITE_EXISTING = true;
       const result = await window.vtta.image.upload(
         path,
         `${text}.svg`,

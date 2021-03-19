@@ -10,7 +10,6 @@ export default () => {
           entry.data.flags.vtta.id
       )
     ) {
-      console.log(html.html());
       // get the custom label
       const label = options.object.icon.split("/").pop().replace(".svg", "");
 
