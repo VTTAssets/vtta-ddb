@@ -141,36 +141,30 @@ const processScene = async (scene) => {
 
   // 4. Create the Scene with the supplied data
   let tokens = [];
-  scene.monsters.forEach((monster) => {
+
+  for (let monsterId in scene.monsters) {
+    console.log("ID: " + monsterId);
     const actor = game.actors.entities.find(
       (entity) =>
         entity.data.flags.vtta &&
         entity.data.flags.vtta.id &&
-        entity.data.flags.vtta.id === monster.id
+        entity.data.flags.vtta.id === monsterId
     );
+
     if (actor) {
-      monster.positions.forEach((position) => {
-        if (position.name) {
-          tokens.push({
+      const monster = scene.monsters[monsterId];
+      for (let occurance of monster) {
+        if (occurance.x && occurance.y) {
+          const tokenData = {
             ...actor.data.token,
-            actorData: {
-              name: position.name,
-            },
-            x: position.x,
-            y: position.y,
+            ...occurance,
             hidden: true,
-          });
-        } else {
-          tokens.push({
-            ...actor.data.token,
-            x: position.x,
-            y: position.y,
-            hidden: true,
-          });
+          };
+          tokens.push(tokenData);
         }
-      });
+      }
     }
-  });
+  }
   scene.tokens = tokens;
 
   const folder = await getFolder(scene);
