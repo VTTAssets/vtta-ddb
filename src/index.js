@@ -1,15 +1,15 @@
 import checkCoreAvailability from "./setup/checkCoreAvailability.js";
 import setup from "./setup/index.js";
 
-const limiter = new Bottleneck({
-  minTime: 333,
-});
-
 Hooks.once("ready", async () => {
   try {
     const coreVersionNumber = await checkCoreAvailability();
+    console.log("vtta-ddb | Dependency detected, continuing...");
     await setup();
   } catch (error) {
+    console.log(
+      "vtta-ddb | Dependency 'vtta-core' did not respond in time, aborting start."
+    );
     console.log(error);
     const core = game.modules.get("vtta-core");
     const coreMissing = core === undefined;
