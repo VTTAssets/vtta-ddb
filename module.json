@@ -7,7 +7,7 @@
   "dependencies": [
     {
       "name": "vtta-core",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "manifest": "https://www.vtta.io/download/vtta-core/module.json",
       "download": "https://www.vtta.io/download/vtta-core"
     }
