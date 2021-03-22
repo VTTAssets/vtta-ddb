@@ -11,7 +11,7 @@ const config = {
     core: {
       query: "vtta-core.query",
       response: "vtta-core.available",
-      timeout: 100,
+      timeout: 200,
       retries: 20,
     },
     extension: {

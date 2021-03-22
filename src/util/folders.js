@@ -14,7 +14,6 @@ const create = (entityType, name, parent = null) => {
       parent: parent === null ? parent : parent.data._id,
       sort: 30000,
     };
-    console.log(folderData);
     return Folder.create(folderData, { displaySheet: false });
   } else {
     return folder;

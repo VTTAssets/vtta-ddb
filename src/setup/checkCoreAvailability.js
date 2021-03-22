@@ -1,8 +1,18 @@
 import config from "../config/index.js";
-import logger from "../util/logger.js";
+
+const log = (message) => {
+  const DEBUG = true;
+  if (DEBUG) {
+    console.log(
+      `%c[INIT] ${config.module.name} %c${message}`,
+      "font-weight: bold; background-color: lightblue; color: ##1f1f1f;",
+      "font-weight: bold; background-color: lightblue; color: ##1f1f1f;font-weight: normal"
+    );
+  }
+};
 
 const checkCoreAvailability = () => {
-  logger.info(`Querying for vtta-core`);
+  log(`Querying for vtta-core`);
   return new Promise((resolve, reject) => {
     // query only so many times as configured
     let coreAvailabilityTries = 0;
@@ -10,9 +20,7 @@ const checkCoreAvailability = () => {
     // setting up the interval
     const coreQueryInterval = setInterval(() => {
       coreAvailabilityTries++;
-      logger.info(
-        `Querying for vtta-core (${coreAvailabilityTries} attempt)...`
-      );
+      log(`Querying for vtta-core (${coreAvailabilityTries} attempt)...`);
 
       // if we exceed the number of queries, we abort the setup
       if (coreAvailabilityTries > config.messaging.core.retries) {
@@ -30,7 +38,7 @@ const checkCoreAvailability = () => {
         // stop the interval
         clearInterval(coreQueryInterval);
 
-        logger.info(`vtta-core v${event.detail.version} found.`);
+        log(`vtta-core v${event.detail.version} found.`);
         // resolve with the core version number
         resolve({
           version: event.detail.version,
