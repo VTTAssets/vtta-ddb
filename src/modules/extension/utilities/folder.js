@@ -112,6 +112,31 @@ const getEntityType = (entity) => {
   }
 };
 
+const getStructure = (entity) => {
+  const entityType = getEntityType(entity);
+  const type = entity.type;
+  let folders = entity.flags.vtta.folders.filter(
+    (folder) =>
+      folder !== undefined && typeof folder === "string" && folder.trim() !== ""
+  );
+  if (folders.length >= 3) folders.splice(2, 1);
+  switch (entityType) {
+    case "Item":
+      switch (type) {
+        case "weapon":
+          return ["D&D Beyond Integration", ...folders];
+        case "spell":
+          return ["D&D Beyond Integration", "Spells", ...folders];
+        default:
+          return ["D&D Beyond Integration", ...folders];
+      }
+    case "JournalEntry":
+      return folders;
+    default:
+      return ["D&D Beyond Integration", ...folders];
+  }
+};
+
 export const createFolders = async (entities) => {
   const ITEM_TYPES = Object.keys(CONFIG.Item.typeLabels);
   const ACTOR_TYPES = Object.keys(CONFIG.Actor.typeLabels);
@@ -135,9 +160,10 @@ export const createFolders = async (entities) => {
     const folderStructure = collections[entityType]
       .map((entity) => {
         if (entity.flags && entity.flags.vtta && entity.flags.vtta.folders) {
-          return [...entity.flags.vtta.folders].filter(
-            (folder) => folder.trim().length && folder !== undefined
-          );
+          let folderStructure = getStructure(entity);
+          console.log(folderStructure);
+
+          return folderStructure;
         } else {
           return undefined;
         }
@@ -170,9 +196,7 @@ const findFolder = async (entityType, structure, parent = null) => {
 export const getFolder = (entity) => {
   let folderStructure = [];
   if (entity.flags && entity.flags.vtta && entity.flags.vtta.folders) {
-    folderStructure = [...entity.flags.vtta.folders].filter(
-      (folder) => folder.trim().length && folder !== undefined
-    );
+    folderStructure = getStructure(entity);
   }
   if (folderStructure.length) {
     return findFolder(getEntityType(entity), folderStructure);
