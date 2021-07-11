@@ -1,26 +1,31 @@
+import id from "../../../util/id.js";
+
 const FOLDER_COLORS = new Map();
 FOLDER_COLORS.set("DEFAULT.LEVEL1", "#520000");
 FOLDER_COLORS.set("DEFAULT.LEVEL2", "#750000");
 FOLDER_COLORS.set("DEFAULT.LEVEL3", "#8f0000");
 FOLDER_COLORS.set("SCENE.LEVEL1", "#000a2e");
-FOLDER_COLORS.set("SCENE.LEVEL1", "#000f47");
-FOLDER_COLORS.set("SCENE.LEVEL1", "#001666");
+FOLDER_COLORS.set("SCENE.LEVEL2", "#000f47");
+FOLDER_COLORS.set("SCENE.LEVEL3", "#001666");
 FOLDER_COLORS.set("FALLBACK", "#111111");
 
 const createFolder = (entityType, name, parent = null, color) => {
   if (!color) color = FOLDER_COLORS.get("FALLBACK");
 
-  const folder = game.folders.entities.find(
+  const collection = window.vtta.postEightZero
+    ? game.folders.contents
+    : game.folders.entities;
+  const folder = collection.find(
     (folder) =>
       folder.data.name === name &&
       folder.data.type === entityType &&
-      folder.data.parent === (parent === null ? null : parent.data._id)
+      folder.data.parent === (parent === null ? null : id.get(parent))
   );
   if (folder === undefined) {
     const folderData = {
       name: name,
       type: entityType,
-      parent: parent === null ? parent : parent.data._id,
+      parent: parent === null ? parent : id.get(parent),
       color: color,
       sort: 30000,
     };
@@ -119,22 +124,22 @@ const getStructure = (entity) => {
     (folder) =>
       folder !== undefined && typeof folder === "string" && folder.trim() !== ""
   );
-  if (folders.length >= 3) folders.splice(2, 1);
+
   switch (entityType) {
     case "Item":
-      switch (type) {
-        case "weapon":
-          return ["D&D Beyond Integration", ...folders];
-        case "spell":
-          return ["D&D Beyond Integration", "Spells", ...folders];
-        default:
-          return ["D&D Beyond Integration", ...folders];
-      }
+      folders = ["D&D Beyond Integration", ...folders];
+      break;
     case "JournalEntry":
-      return folders;
+      break;
     default:
-      return ["D&D Beyond Integration", ...folders];
+      folders = ["D&D Beyond Integration", ...folders];
   }
+  console.log("Folders: ");
+  console.log(folders);
+  folders = folders.slice(0, 3);
+  console.log("Folders after slice");
+  console.log(folders);
+  return folders;
 };
 
 export const createFolders = async (entities) => {
@@ -161,7 +166,6 @@ export const createFolders = async (entities) => {
       .map((entity) => {
         if (entity.flags && entity.flags.vtta && entity.flags.vtta.folders) {
           let folderStructure = getStructure(entity);
-          console.log(folderStructure);
 
           return folderStructure;
         } else {
@@ -177,11 +181,14 @@ export const createFolders = async (entities) => {
 
 const findFolder = async (entityType, structure, parent = null) => {
   const name = structure.shift();
-  let folder = game.folders.entities.find(
+  const collection = window.vtta.postEightZero
+    ? game.folders.contents
+    : game.folders.entities;
+  let folder = collection.find(
     (folder) =>
       folder.data.name === name &&
       folder.data.type === entityType &&
-      folder.data.parent === (parent === null ? null : parent.data._id)
+      folder.data.parent === (parent === null ? null : id.get(parent))
   );
   if (!folder) {
     folder = await createFolder(entityType, name, parent);
@@ -201,6 +208,8 @@ export const getFolder = (entity) => {
   if (folderStructure.length) {
     return findFolder(getEntityType(entity), folderStructure);
   } else {
-    return Promise.resolve({ _id: null });
+    let folder = id.set({}, null);
+    Promise.resolve(folder);
+    //return Promise.resolve({ id: null });
   }
 };

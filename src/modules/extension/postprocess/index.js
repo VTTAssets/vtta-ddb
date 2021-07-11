@@ -1,4 +1,6 @@
 import { slugify } from "../../../util/string.js";
+import id from "../../../util/id.js";
+import logger from "../../../util/logger.js";
 
 const postProcessJournals = async (ids) => {
   const replaceStringByString = (str, search, replace, index) => {
@@ -26,7 +28,6 @@ const postProcessJournals = async (ids) => {
 
     return {
       lookup: (slug) => {
-        console.log("Fallback for " + slug);
         const [type, slugifiedName] = slug.split("/");
 
         if (dict[type] && dict[type].index) {
@@ -35,8 +36,10 @@ const postProcessJournals = async (ids) => {
           );
 
           if (entry) {
-            const fallback = `@Compendium[${dict[type].collection}.${entry._id}]`;
-            console.log("Fallback found: " + fallback);
+            //const fallback = `@Compendium[${dict[type].collection}.${entry._id}]`;
+            const fallback = `@Compendium[${dict[type].collection}.${id.get(
+              entry
+            )}]`;
             return { ref: fallback, name: entry.name };
           }
         }
@@ -46,7 +49,9 @@ const postProcessJournals = async (ids) => {
   };
 
   const postProcessJournal = async (journalId, dictionary) => {
-    const journalEntry = game.journal.entities.find(
+    const journalEntry = (
+      window.vtta.postEightZero ? game.journal.contents : game.journal.entities
+    ).find(
       (journal) =>
         journal.data.flags &&
         journal.data.flags.vtta &&
@@ -58,7 +63,8 @@ const postProcessJournals = async (ids) => {
 
     let content = `${journalEntry.data.content}`;
 
-    const regex = /{{@(Item|Actor|JournalEntry|Scene|RollTable)\[([^\/\]]+\/[^\/\]]+)\](?:{([^}]+)})*}}/g;
+    const regex =
+      /{{@(Item|Actor|JournalEntry|Scene|RollTable)\[([^\/\]]+\/[^\/\]]+)\](?:{([^}]+)})*}}/g;
 
     let matches;
     while ((matches = regex.exec(content))) {
@@ -71,19 +77,29 @@ const postProcessJournals = async (ids) => {
       let collection;
       switch (entityClass) {
         case "Actor":
-          collection = game.actors.entities;
+          collection = window.vtta.postEightZero
+            ? game.actors.contents
+            : game.actors.entities;
           break;
         case "Item":
-          collection = game.items.entities;
+          collection = window.vtta.postEightZero
+            ? game.items.contents
+            : game.items.entities;
           break;
         case "JournalEntry":
-          collection = game.journal.entities;
+          collection = window.vtta.postEightZero
+            ? game.journal.contents
+            : game.journal.entities;
           break;
         case "Scene":
-          collection = game.scenes.entities;
+          collection = window.vtta.postEightZero
+            ? game.scenes.contents
+            : game.scenes.entities;
           break;
         case "RollTable":
-          collection = game.tables.entities;
+          collection = window.vtta.postEightZero
+            ? game.tables.contents
+            : game.tables.entities;
           break;
       }
 
@@ -97,7 +113,10 @@ const postProcessJournals = async (ids) => {
       );
       if (entity) {
         isChanged = true;
-        const replacement = `@${entityClass}[${entity._id}]{${
+        // const replacement = `@${entityClass}[${entity._id}]{${
+        //   text ? text : entity.name
+        // }}`;
+        const replacement = `@${entityClass}[${id.get(entity)}]{${
           text ? text : entity.name
         }}`;
         try {
@@ -127,8 +146,16 @@ const postProcessJournals = async (ids) => {
     }
 
     if (isChanged === true) {
-      //journalEntry.data.content = content;
-      return JournalEntry.update({ _id: journalEntry._id, content: content });
+      //return JournalEntry.update({ _id: journalEntry._id, content: content });
+      if (window.vtta.postEightZero) {
+        const updateData = [
+          { _id: journalEntry.id, content: content },
+        ];
+        logger.info("Update Data", updateData)
+        return JournalEntry.updateDocuments(updateData);
+      } else {
+        return JournalEntry.update({ _id: journalEntry._id, content: content });
+      }
     }
   };
 

@@ -11,5 +11,7 @@
   "SETTING.spellCompendium.hint": "Select the target compendium you intend to use for spells.",
   "SETTING.monsterCompendium.label": "Target compendium for Monsters",
   "SETTING.monsterCompendium.hint": "Select the target compendium you intend to use for monsters.",
-  "NOTE.VTTACustomLabel": "VTTA Custom Label"
+  "NOTE.VTTACustomLabel": "VTTA Custom Label",
+  "UI.BUTTON.SCENE_UPDATE_POLICY:UPDATE": "Update existing",
+  "UI.BUTTON.SCENE_UPDATE_POLICY:CLONE": "Import as new"
 }

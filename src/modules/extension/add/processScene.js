@@ -2,6 +2,7 @@ import logger from "../../../util/logger.js";
 import { slugify } from "../../../util/string.js";
 import Label from "../utilities/label.js";
 import { getFolder } from "../utilities/folder.js";
+import id from "../../../util/id.js";
 
 const upload = (url, path, filename, overwriteExisting = false) => {
   return new Promise(async (resolve, reject) => {
@@ -44,7 +45,7 @@ const getLabel = (str) => {
   return id;
 };
 
-const processScene = async (scene) => {
+const processScene = async (scene, sceneUpdatePolicy) => {
   const path = `${game.settings.get("vtta-ddb", "sceneImageDirectory")}/${
     scene.flags.vtta.code
   }`;
@@ -55,7 +56,6 @@ const processScene = async (scene) => {
   // 1. Upload the scene image file
   const OVERWRITE_EXISTING = true;
 
-  logger.info("Map Upload started");
   let result = await upload(scene.img, path, filename, OVERWRITE_EXISTING);
   if (result.status === "success") {
     scene.img = result.path;
@@ -99,42 +99,56 @@ const processScene = async (scene) => {
   const NOTE_ICON_PADDING = Math.ceil((scene.grid - NOTE_ICON_SIZE) / 2);
 
   // create used labels, and place them if we got x/y coordinates for them
-  let notes = scene.journals.map(async (note, index) => {
-    return new Promise((resolve, reject) => {
-      let journal = journals.find(
-        (journal) => journal.data.flags.vtta.id === note.id
-      );
-      if (journal) {
-        // upload the label for it
-        Label.create("" + note.label).then((label) => {
-          if (note.x === undefined || note.y === undefined) {
-            // Put them in the upper left corner of the map
-            note.x =
-              SCENE_PADDING.left + index * scene.grid + NOTE_ICON_PADDING;
-            note.y = SCENE_PADDING.top + NOTE_ICON_PADDING;
-          }
-          const data = {
-            entryId: journal._id,
-            icon: label,
-            x: note.x,
-            y: note.y,
-            iconSize: NOTE_ICON_SIZE,
-          };
-          resolve(data);
-        });
+  scene.notes = [];
+  let noteIndex = 0;
+  for (let note in scene.journals) {
+    const journalEntry = (
+      window.vtta.postEightZero ? game.journal.contents : game.journal.entities
+    ).find(
+      (entity) =>
+        entity.data.flags.vtta &&
+        entity.data.flags.vtta.id &&
+        entity.data.flags.vtta.id === note.id
+    );
+
+    if (journalEntry) {
+      noteIndex++;
+      const positions = note.positions;
+      const { label, name } = journalEntry.data.flags.vtta;
+
+      const iconPath = await Label.create("" + label);
+      let data = {
+        //entryId: journalEntry._id,
+        entryId: id.get(journalEntry),
+        icon: iconPath,
+        iconSize: NOTE_ICON_SIZE,
+      };
+      if (positions.length === 0) {
+        const data = {
+          //entryId: journalEntry._id,
+          entryId: id.get(journalEntry),
+          icon: iconPath,
+          iconSize: NOTE_ICON_SIZE,
+          x: SCENE_PADDING.left + noteIndex * scene.grid + NOTE_ICON_PADDING,
+          y: SCENE_PADDING.top + NOTE_ICON_PADDING,
+        };
+        scene.notes.push(data);
       } else {
-        reject("No Journal Entry found");
+        scene.notes = [
+          ...scene.notes,
+          positions.map((position) => {
+            return {
+              //entryId: journalEntry._id,
+              entryId: id.get(journalEntry),
+              icon: iconPath,
+              iconSize: NOTE_ICON_SIZE,
+              ...position,
+            };
+          }),
+        ];
       }
-    });
-  });
-
-  let notesData = await Promise.allSettled(notes);
-  scene.notes = notesData
-    .filter((promise) => promise.status === "fulfilled")
-    .map((promise) => promise.value);
-
-  // 3. Adding monsters
-
+    }
+  }
   // clean up
   delete scene.banner;
   delete scene.journals;
@@ -142,22 +156,22 @@ const processScene = async (scene) => {
   // 4. Create the Scene with the supplied data
   let tokens = [];
 
-  for (let monsterId in scene.monsters) {
-    console.log("ID: " + monsterId);
-    const actor = game.actors.entities.find(
+  for (let monster in scene.monsters) {
+    const actor = (
+      window.vtta.postEightZero ? game.actors.contents : game.actors.entities
+    ).find(
       (entity) =>
         entity.data.flags.vtta &&
         entity.data.flags.vtta.id &&
-        entity.data.flags.vtta.id === monsterId
+        entity.data.flags.vtta.id === monster.id
     );
 
     if (actor) {
-      const monster = scene.monsters[monsterId];
-      for (let occurance of monster) {
-        if (occurance.x && occurance.y) {
+      for (let position of monster.positions) {
+        if (position.x && position.y) {
           const tokenData = {
             ...actor.data.token,
-            ...occurance,
+            ...position,
             hidden: true,
           };
           tokens.push(tokenData);
@@ -168,25 +182,51 @@ const processScene = async (scene) => {
   scene.tokens = tokens;
 
   const folder = await getFolder(scene);
-  scene.folder = folder._id;
+  //scene.folder = folder._id;
+  scene.folder = id.get(folder);
 
   // On re-import, we will rename the scene accordingly to avoid confusions
-  if (
-    game.scenes.entities.find((existing) => existing.name === scene.name) !==
-    undefined
-  ) {
-    let index = 1;
-    let existing;
-    do {
-      index++;
-      existing = game.scenes.entities.find(
-        (existing) => existing.name === `${scene.name} (${index})`
-      );
-    } while (existing !== undefined || index >= 10);
+  const existingScene = (
+    window.vtta.postEightZero ? game.scenes.contents : game.scenes.entities
+  ).find(
+    (existing) =>
+      existing.data.flags &&
+      existing.data.flags.vtta &&
+      existing.data.flags.vtta.id &&
+      existing.data.flags.vtta.id === scene.flags.vtta.id &&
+      existing.name === scene.name
+  );
+  if (existingScene !== undefined) {
+    switch (sceneUpdatePolicy) {
+      case "SCENE_UPDATE_POLICY:UPDATE":
+        //scene._id = existingScene._id;
+        scene = id.set(scene, id.get(existingScene));
+        logger.info("Updating scene " + scene.name, scene);
 
-    scene.name = `${scene.name} (${index})`;
+        if (window.vtta.postEightZero) {
+          return Scene.updateDocuments([scene]);
+        } else {
+          return Scene.update(scene);
+        }
+        break;
+      case "SCENE_UPDATE_POLICY:CLONE":
+        let index = 1;
+        let existing;
+        do {
+          index++;
+          existing = (
+            window.vtta.postEightZero
+              ? game.scenes.contents
+              : game.scenes.entities
+          ).find((existing) => existing.name === `${scene.name} (${index})`);
+        } while (existing !== undefined || index >= 10);
+
+        scene.name = `${scene.name} (${index})`;
+        break;
+    }
   }
 
+  logger.info("Creating scene " + scene.name, scene);
   return Scene.create(scene);
 };
 

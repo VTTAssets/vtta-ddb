@@ -9,6 +9,8 @@ import showReleaseNotes from "./showReleaseNotes.js";
 import registerJournalDisplay from "../modules/journals/registerJournalDisplay.js";
 // import initializeCache from "./initializeCache.js";
 
+import registerSheets from "../modules/sheets/index.js";
+
 import Socket from "../modules/socket/index.js";
 
 const setup = async () => {
@@ -24,6 +26,7 @@ const setup = async () => {
   await showReleaseNotes();
 
   registerJournalDisplay();
+  registerSheets();
 
   Socket.listen();
 

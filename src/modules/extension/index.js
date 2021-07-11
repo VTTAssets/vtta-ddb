@@ -38,17 +38,6 @@ export default () => {
         break;
       case "POSTPROCESS":
         response = await postprocess(message);
-      case "NEWWORLD":
-        const isNewish =
-          game.actors.entities.length < 10 && game.scenes.entities.length < 3;
-        response = {
-          type: "NEWWORLD_RESPONSE",
-          data: {
-            isNew: isNewish,
-            sceneCount: game.scenes.entities.length,
-            actorCount: game.actors.entities.length,
-          },
-        };
         break;
     }
 

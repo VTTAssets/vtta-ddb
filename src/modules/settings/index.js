@@ -5,8 +5,16 @@ import { semanticVersionCompare } from "../../util/string.js";
 export default function () {
   const denyFilter = (pack) => pack.metadata.package !== "dnd5e";
 
+  /**
+   * FOLLOWING:
+   * Adjustments for 0.8.x
+   */
   const actorCompendiums = game.packs
-    .filter((pack) => pack.entity === "Actor")
+    .filter((pack) =>
+      window.vtta.postEightZero
+        ? pack.documentName === "Actor"
+        : pack.entity === "Actor"
+    )
     .filter(denyFilter)
     .reduce(
       (choices, pack) => {
@@ -19,7 +27,11 @@ export default function () {
     );
 
   const itemCompendiums = game.packs
-    .filter((pack) => pack.entity === "Item")
+    .filter((pack) =>
+      window.vtta.postEightZero
+        ? pack.documentName === "Item"
+        : pack.entity === "Item"
+    )
     .filter(denyFilter)
     .reduce(
       (choices, pack) => {
@@ -31,6 +43,9 @@ export default function () {
       { none: "None: Do not save these entities in any compendium" }
     );
 
+  /**
+   * END ADJUSTMENTS
+   */
   const settings = [
     {
       // log level
@@ -98,9 +113,8 @@ export default function () {
     {
       key: "release-notes-version",
       type: String,
-      default: 0,
+      default: "1.0.0",
       scope: "world",
-      choices: actorCompendiums,
       config: false,
       public: false,
       section: "tutorial",
