@@ -2,6 +2,7 @@ import logger from "../../util/logger.js";
 import config from "../../config/index.js";
 import { slugify } from "../../util/string.js";
 import version from "../../util/version.js";
+import id from "../../util/id.js";
 
 let CacheFactory = (() => {
   let instance;
@@ -85,7 +86,7 @@ let CacheFactory = (() => {
                 );
               })
               .map((entity) => ({
-                _id: entity._id,
+                _id: id.get(entity),
                 name: entity.name,
                 v: version.get(entity),
               }));

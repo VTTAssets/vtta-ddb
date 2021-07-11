@@ -1,5 +1,6 @@
 import config from "../../../config/index.js";
 import { slugify } from "../../../util/string.js";
+import id from "../../../util/id.js";
 
 /**
  * FILTER UTILITIES
@@ -59,7 +60,8 @@ export const queryCompendium = async (compendium, slugs) => {
 
     // retrieve all entities given by those _ids
     let entities = await Promise.all(
-      filteredIndices.map((entry) => compendium.getEntry(entry._id))
+      //filteredIndices.map((entry) => compendium.getEntry(entry._id))
+      filteredIndices.map((entry) => compendium.getEntry(id.get(entry)))
     );
     console.log(entities);
     entities = entities.filter(

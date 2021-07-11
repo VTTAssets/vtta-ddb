@@ -2,6 +2,7 @@ import { slugify, capitalize } from "../../../util/string.js";
 import { queryCompendium, getCompendium } from "../utilities/compendium.js";
 import { queryWorld } from "../utilities/world.js";
 import { createFolders, getFolder } from "../utilities/folder.js";
+import id from "../../../util/id.js";
 
 import logger from "../../../util/logger.js";
 
@@ -15,6 +16,7 @@ const getEntityClass = (entity) => {
   const SCENE_TYPES = ["scene"];
   const ROLLTABLE_TYPES = ["table"];
   const JOURNALENTRY_TYPES = ["journal"];
+  const SCENES_TYPES = ["scenes"];
 
   if (ACTOR_TYPES.includes(entity.type)) {
     return Actor;
@@ -35,16 +37,15 @@ const getEntityClass = (entity) => {
   if (JOURNALENTRY_TYPES.includes(entity.type)) {
     return JournalEntry;
   }
+
+  if (SCENES_TYPES.includes(entity.type)) {
+    return Scene;
+  }
 };
 
 export default async (message) => {
   console.log("Received Message");
   console.log(message);
-  // REQUEST
-  // {
-  //   type: 'ADD',
-  //   data: [entity]
-  // }
 
   // collect all entities in this add batch
   const ids = message.data.map((entity) => entity.flags.vtta.id);
@@ -54,15 +55,11 @@ export default async (message) => {
     return all;
   }, []);
 
-  // Max 3 requests/second, one at a time
+  // Max 10 requests/second, one at a time
   const limiter = new Bottleneck({
     maxConcurrent: 10,
     minTime: 100,
   });
-  // const limiter = new Bottleneck({
-  //   maxConcurrent: 3,
-  //   minTime: 200,
-  // });
 
   const progressId = window.vtta.ui.ProgressBar.show(
     "Entities to process",
@@ -129,19 +126,41 @@ export default async (message) => {
 
     // adding the entities to the world, too
     let existing = await queryWorld(type, slugs);
+    let existingSceneCount =
+      type === "scenes" && existing.length ? existing.length : 0;
+
+    let sceneUpdatePolicy = "SCENE_UPDATE_POLICY:CLONE";
+    if (existingSceneCount) {
+      const buttons = [
+        "SCENE_UPDATE_POLICY:UPDATE",
+        "SCENE_UPDATE_POLICY:CLONE",
+      ];
+      const modal = new window.vtta.ui.Modal(
+        "confirm-scene-updates",
+        "What shall I do with existing scenes?",
+        `<p>You are about to import <strong>${existingSceneCount} scenes</strong> that already exist in this world. You can</p>
+        <ol>
+        <li><strong>update the existing scenes</strong> - that will update all scenes with the incoming data, overwriting any manual changes you made to them (including placed tokens) or</li>
+        <li><strong>import them as new scenes</strong> - this allows you to compare beween the old and the newly imported scene, but will require manual effort from your side to clean up your world.</li>
+        </ol>
+        <p>How do you want to proceed?</p>`,
+        buttons
+      );
+      const choice = await modal.show();
+
+      sceneUpdatePolicy = choice.button;
+    }
     await Promise.all(
       entities.map((entity) => {
         // remove the ID from the compendium import that might have happened prior to this call
-        delete entity._id;
-
-        console.log("----- PROCESSING ENTITY -------------------");
-        console.log("Entity type: " + entity.type);
-        console.log("Type: " + type);
-        console.log("-------------------------------------------");
+        //delete entity._id;
+        entity = id.delete(entity);
 
         // pre-process Scenes:
         if (entity.type === "scene") {
-          return limiter.schedule(() => processScene(entity));
+          return limiter.schedule(() =>
+            processScene(entity, sceneUpdatePolicy)
+          );
         } else {
           return new Promise((resolve, reject) => {
             // check if the one exists already
@@ -160,34 +179,39 @@ export default async (message) => {
                 entity.flags.vtta.v &&
                 entry.flags.vtta.v === entity.flags.vtta.v
               ) {
-                logger.info(
-                  "Entity " +
-                    entity.name +
-                    " already up to date, skipping import",
-                  entry.flags.vtta.id
-                );
                 return resolve(entry);
               }
               // updating an existing world entry
-              entity._id = entry._id;
+              //  entity._id = entry._id;
+              entity = id.set(entity, id.get(entry));
 
               // remove any image information from the actor to not overwrite that in future updates
               if (entity.img) delete entity.img;
               if (entity.token && entity.token.img) delete entity.token.img;
 
-              resolve(
-                limiter.schedule(() => getEntityClass(entity).update(entity))
-              );
+              if (window.vtta.postEightZero) {
+                resolve(
+                  limiter.schedule(() =>
+                    getEntityClass(entity).updateDocuments([entity])
+                  )
+                );
+              } else {
+                resolve(
+                  limiter.schedule(() => getEntityClass(entity).update(entity))
+                );
+              }
             } else {
-              logger.info("Processing entity", entity);
               getFolder(entity)
                 .then((folder) => {
-                  entity.folder = folder._id;
+                  // entity.folder = folder._id;
+                  entity.folder = id.get(folder);
 
                   switch (type) {
                     case "monsters":
-                      if (!entity.img) entity.img = DEFAULT_TOKEN;
-                      logger.info("Creating actor", entity);
+                      if (!entity.img)
+                        entity.img = window.vtta.postEightZero
+                          ? CONST.DEFAULT_TOKEN
+                          : DEFAULT_TOKEN;
                       limiter
                         .schedule(() => getEntityClass(entity).create(entity))
                         .then((actor) => {
@@ -207,6 +231,10 @@ export default async (message) => {
                       );
                       break;
                     default:
+                      if (!entity.img)
+                        entity.img = window.vtta.postEightZero
+                          ? CONST.DEFAULT_TOKEN
+                          : DEFAULT_TOKEN;
                       resolve(
                         limiter.schedule(() =>
                           getEntityClass(entity).create(entity)
@@ -215,6 +243,7 @@ export default async (message) => {
                   }
                 })
                 .catch((error) => {
+                  logger.error("Error", error);
                   logger.error(
                     "Error getting the folder/ creating the entity",
                     entity

@@ -43,6 +43,14 @@ const createLabel = (text) => {
   });
 };
 
+const getLabelPath = (text) => {
+  const path = `${game.settings.get("vtta-ddb", "sceneImageDirectory")}/${
+    config.paths.labels
+  }`;
+  return `${ROUTE_PREFIX !== "" ? ROUTE_PREFIX + "/" : ""}${path}/${text}.svg`;
+};
+
 export default {
   create: createLabel,
+  path: getLabelPath,
 };

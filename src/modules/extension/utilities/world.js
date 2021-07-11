@@ -4,27 +4,39 @@ const getCollection = (type) => {
   let collection;
   switch (type) {
     case "monsters":
-      collection = game.actors.entities.filter(
-        (actor) => actor.data.type === "npc"
-      );
+      collection = window.vtta.postEightZero
+        ? game.actors.contents
+        : game.actors.entities;
+      collection = collection.filter((actor) => actor.data.type === "npc");
       break;
     case "item":
     case "equipment":
     case "magic-items":
-      collection = game.items.entities.filter(
-        (item) => item.data.type !== "spell"
-      );
+      collection = window.vtta.postEightZero
+        ? game.items.contents
+        : game.items.entities;
+      collection = collection.filter((item) => item.data.type !== "spell");
       break;
     case "spells":
-      collection = game.items.entities.filter(
-        (item) => item.data.type === "spell"
-      );
+      collection = window.vtta.postEightZero
+        ? game.items.contents
+        : game.items.entities;
+      collection = collection.filter((item) => item.data.type === "spell");
       break;
     case "tables":
-      collection = game.tables.entities;
+      collection = window.vtta.postEightZero
+        ? game.tables.contents
+        : game.tables.entities;
       break;
     case "journals":
-      collection = game.journal.entities;
+      collection = window.vtta.postEightZero
+        ? game.journal.contents
+        : game.journal.entities;
+      break;
+    case "scenes":
+      collection = window.vtta.postEightZero
+        ? game.scenes.contents
+        : game.scenes.entities;
       break;
   }
   if (collection) collection = collection.map((entry) => entry.data);
@@ -49,14 +61,6 @@ export const queryWorld = (type, slugs) => {
         entry.flags.vtta.id &&
         ids.includes(entry.flags.vtta.id)
     );
-    // const byName = collection.filter(filterByNames(slugs));
-    // console.log(byName);
-    // const byVersion = byName.filter(
-    //   (entry) =>
-    //     entry.flags && entry.flags.vtta && entry.flags.vtta.v !== undefined
-    // );
-    // console.log(byVersion);
-    // return byVersion;
   }
   return [];
 };

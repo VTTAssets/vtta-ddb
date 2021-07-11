@@ -1,30 +1,36 @@
 import { slugify } from "../../../util/string.js";
 import { queryCompendium, getCompendium } from "../utilities/compendium.js";
 import { queryWorld } from "../utilities/world.js";
-
+import logger from "../../../util/logger.js";
 export default async (message) => {
   // REQUEST
   // {
-  //   type: 'QUERY',
-  //   data: ["monsters/slug-a", "monsters/slug-b", "magic-items/slug-c"]
+  //   type: "QUERY",
+  //   data: [{id: "monsters/the-demogorgon"}]
   // }
 
   const types = [
-    ...new Set(message.data.map((slug) => slug.split("/").shift())),
+    ...new Set(
+      message.data
+        .map((query) => query.id)
+        .map((slug) => slug.split("/").shift())
+    ),
   ].sort();
 
   let results = [];
   for (let type of types) {
     const slugs = message.data
+      .map((query) => query.id)
       .filter((slug) => slug.indexOf(type) === 0)
       .map((slug) => slug.split("/").pop());
 
     // load the world
     results = results.concat(
       queryWorld(type, slugs).map((entry) => {
+        const { id, v } = entry.flags.vtta;
         return {
-          name: `${type}/${slugify(entry.name)}`,
-          v: entry.flags.vtta.v,
+          id,
+          v,
         };
       })
     );
@@ -58,10 +64,13 @@ export default async (message) => {
     return all;
   }, []);
 
-  return {
+  const response = {
     type: "QUERY_RESPONSE",
     data: results,
   };
+
+  logger.info("Sending response to query", response);
+  return response;
 };
 
 //   const start = performance.now();

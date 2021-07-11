@@ -1,0 +1,9 @@
+{
+    "version": 3,
+    "mappings": "AAAA,AAAA,aAAa,CAAC,IAAI,AAAA,IAAI,CAAC;EACrB,WAAW,EAAE,MAAM;EACnB,OAAO,EAAE,GAAG;CACb",
+    "sources": [
+        "sheets.scss"
+    ],
+    "names": [],
+    "file": "sheets.css"
+}

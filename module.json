@@ -3,17 +3,17 @@
   "title": "VTTA D&D Beyond Integration",
   "description": "Integrate FVTT with your licensed content on D&D Beyond",
   "author": "Sebastian Will <vttassets@gmail.com>",
-  "version": "1.1.9",
+  "version": "2.0.0",
   "dependencies": [
     {
       "name": "vtta-core",
-      "version": "1.1.6",
+      "version": "2.0.0",
       "manifest": "https://www.vtta.io/download/vtta-core/module.json",
       "download": "https://www.vtta.io/download/vtta-core"
     }
   ],
   "minimumCoreVersion": "0.7.9",
-  "compatibleCoreVersion": "0.7.9",
+  "compatibleCoreVersion": "0.8.8",
   "esmodules": ["src/index.js"],
   "languages": [
     {
@@ -24,6 +24,6 @@
   ],
   "manifest": "http://localhost:5000/vtta-ddb/module.json",
   "download": "http://localhost:5000/vtta-ddb",
-  "styles": ["/css/css-fixes.css", "/css/journal.css"],
+  "styles": ["/css/css-fixes.css", "/css/journal.css", "/css/sheets.css"],
   "socket": true
 }

@@ -16,6 +16,7 @@ const listen = () => {
 
 const send = (action, data) => {
   game.socket.emit("module." + config.module.name, {
+    // this is still using _id in 0.8.x
     sender: game.user.data._id,
     action: action,
     ...data,

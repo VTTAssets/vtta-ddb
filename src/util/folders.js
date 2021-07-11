@@ -1,17 +1,19 @@
 import { ucFirst } from "./string.js";
+import id from "./id.js";
 
 const create = (entityType, name, parent = null) => {
   const folder = game.folders.entities.find(
     (folder) =>
       folder.data.name === name &&
       folder.data.type === entityType &&
-      folder.data.parent === (parent === null ? null : parent.data._id)
+      //folder.data.parent === (parent === null ? null : parent.data._id)
+      folder.data.parent === (parent === null ? null : id.get(parent))
   );
   if (folder === undefined) {
     const folderData = {
       name: name,
       type: entityType,
-      parent: parent === null ? parent : parent.data._id,
+      parent: parent === null ? parent : id.get(parent),
       sort: 30000,
     };
     return Folder.create(folderData, { displaySheet: false });

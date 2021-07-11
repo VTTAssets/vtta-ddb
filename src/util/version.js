@@ -6,4 +6,4 @@ const get = (entity) => {
   return version;
 };
 
-export default { get };
+export { get };
