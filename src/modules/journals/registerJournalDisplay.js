@@ -36,7 +36,6 @@ export default () => {
                 result.img = "modules/vtta-ddb/img/vtta.io-dice-64x64.png";
               return result;
             });
-            console.log(draw);
             await table.toMessage(draw.results, {
               roll: draw.roll,
               messageOptions: {

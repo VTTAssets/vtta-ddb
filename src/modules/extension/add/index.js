@@ -44,9 +44,6 @@ const getEntityClass = (entity) => {
 };
 
 export default async (message) => {
-  console.log("Received Message");
-  console.log(message);
-
   // collect all entities in this add batch
   const ids = message.data.map((entity) => entity.flags.vtta.id);
   const types = ids.reduce((all, current) => {
@@ -186,8 +183,8 @@ export default async (message) => {
               entity = id.set(entity, id.get(entry));
 
               // remove any image information from the actor to not overwrite that in future updates
-              if (entity.img) delete entity.img;
-              if (entity.token && entity.token.img) delete entity.token.img;
+              if (entry.img) delete entity.img;
+              if (entry.token && entry.token.img) delete entity.token.img;
 
               if (window.vtta.postEightZero) {
                 resolve(

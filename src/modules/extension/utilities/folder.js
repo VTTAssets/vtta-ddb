@@ -134,11 +134,7 @@ const getStructure = (entity) => {
     default:
       folders = ["D&D Beyond Integration", ...folders];
   }
-  console.log("Folders: ");
-  console.log(folders);
   folders = folders.slice(0, 3);
-  console.log("Folders after slice");
-  console.log(folders);
   return folders;
 };
 

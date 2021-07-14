@@ -60,15 +60,12 @@ export const queryCompendium = async (compendium, slugs) => {
 
     // retrieve all entities given by those _ids
     let entities = await Promise.all(
-      //filteredIndices.map((entry) => compendium.getEntry(entry._id))
       filteredIndices.map((entry) => compendium.getEntry(id.get(entry)))
     );
-    console.log(entities);
     entities = entities.filter(
       (entry) => entry.flags && entry.flags.vtta && entry.flags.vtta.v
     );
 
-    console.log(entities);
     return entities;
   } catch (error) {
     console.error(error);

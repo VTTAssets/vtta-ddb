@@ -7,6 +7,7 @@ import connect from "./connect/index.js";
 import CONSTANTS from "../../config/CONSTANTS.js";
 
 const sendResponse = (event, response) => {
+  logger.info("[sendResponse] " + event.detail.id, response);
   window.dispatchEvent(new CustomEvent(event.detail.id, { detail: response }));
 };
 
@@ -43,13 +44,25 @@ export default () => {
 
     if (response) {
       response.success = true;
-      sendResponse(event, response);
+      window.dispatchEvent(
+        new CustomEvent(event.detail.id, { detail: response })
+      );
+      //sendResponse(event, response);
     } else {
-      sendResponse(event, {
-        success: false,
-        reason: "Unknown command",
-        data: null,
-      });
+      window.dispatchEvent(
+        new CustomEvent(event.detail.id, {
+          detail: {
+            success: false,
+            reason: "Unknown command",
+            data: null,
+          },
+        })
+      );
+      // sendResponse(event, {
+      //   success: false,
+      //   reason: "Unknown command",
+      //   data: null,
+      // });
     }
   });
 };

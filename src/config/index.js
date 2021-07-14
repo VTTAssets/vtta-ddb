@@ -25,7 +25,4 @@ const config = {
   },
 };
 
-console.log("CONFIG:====");
-console.log(config);
-
 export default config;
