@@ -3,6 +3,9 @@ const config = {
     name: "vtta-ddb",
     label: "VTTA D&D Beyond Integration",
   },
+  requirements: {
+    extension: "2.0.0",
+  },
   startupDelay: 2000,
   templates: {
     partials: {},
