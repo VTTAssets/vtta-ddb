@@ -205,10 +205,17 @@ export default async (message) => {
 
                   switch (type) {
                     case "monsters":
-                      if (!entity.img)
-                        entity.img = window.vtta.postEightZero
-                          ? CONST.DEFAULT_TOKEN
-                          : DEFAULT_TOKEN;
+                      {
+                        if (entity.flags.vtta.token.base) {
+                          entity.img = entity.flags.vtta.token.base;
+                          delete entity.flags.vtta.token.base;
+                        }
+                        if (!entity.img)
+                          entity.img = window.vtta.postEightZero
+                            ? CONST.DEFAULT_TOKEN
+                            : DEFAULT_TOKEN;
+                      }
+
                       limiter
                         .schedule(() => getEntityClass(entity).create(entity))
                         .then((actor) => {

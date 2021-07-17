@@ -3,7 +3,10 @@ import Label from "../extension/utilities/label.js";
 export default () => {
   Hooks.on("renderNoteConfig", (app, html, options) => {
     // check if the note config is working with an vtta-imported Note with a custom label
-    const note = game.journal.get(options.entryId);
+    const entryId = window.vtta.postEightZero
+      ? options.data.entryId
+      : options.entryId;
+    const note = game.journal.get(entryId);
 
     if (note.data.flags && note.data.flags.vtta && note.data.flags.vtta.id) {
       const id = note.data.flags.vtta.id;
