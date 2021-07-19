@@ -206,7 +206,7 @@ export default async (message) => {
                   switch (type) {
                     case "monsters":
                       {
-                        if (entity.flags.vtta.token.base) {
+                        if (entity.flags.vtta && entity.flags.vtta.token && entity.flags.vtta.token.base) {
                           entity.img = entity.flags.vtta.token.base;
                           delete entity.flags.vtta.token.base;
                         }
