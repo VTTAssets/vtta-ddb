@@ -3,7 +3,7 @@
   "title": "VTTA D&D Beyond Integration",
   "description": "Integrate FVTT with your licensed content on D&D Beyond",
   "author": "Sebastian Will <vttassets@gmail.com>",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "dependencies": [
     {
       "name": "vtta-core",

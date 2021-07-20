@@ -54,7 +54,7 @@ export default async (message) => {
 
   // Max 10 requests/second, one at a time
   const limiter = new Bottleneck({
-    maxConcurrent: 10,
+    maxConcurrent: 1,
     minTime: 100,
   });
 
@@ -206,7 +206,11 @@ export default async (message) => {
                   switch (type) {
                     case "monsters":
                       {
-                        if (entity.flags.vtta && entity.flags.vtta.token && entity.flags.vtta.token.base) {
+                        if (
+                          entity.flags.vtta &&
+                          entity.flags.vtta.token &&
+                          entity.flags.vtta.token.base
+                        ) {
                           entity.img = entity.flags.vtta.token.base;
                           delete entity.flags.vtta.token.base;
                         }
