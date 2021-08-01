@@ -184,7 +184,10 @@ export default async (message) => {
 
               // remove any image information from the actor to not overwrite that in future updates
               if (entry.img) delete entity.img;
-              if (entry.token && entry.token.img) delete entity.token.img;
+
+              if (entry.token && entry.token.img) {
+                delete entity.flags.vtta.token;
+              }
 
               if (window.vtta.postEightZero) {
                 resolve(

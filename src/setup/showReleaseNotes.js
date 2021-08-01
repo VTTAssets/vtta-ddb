@@ -24,34 +24,19 @@ export default async () => {
     `<h1>Release Notes: ${game.modules.get(config.module.name).data.title} v${
       game.modules.get(config.module.name).data.version
     }</h1>
-      <h2>Private Beta</h2>
-      <p>Thanks for participating in this private beta, exclusively for you wonderful Patreons. What are we testing in this first step? <b>Stability!</b></p>
-      <p>Mainly the stability of the server environment - there quite some changes been made to the modules, too, but the main work was done server-side and I need to make sure everything is working 
-      as planned. Please focus your feedback on</p>
+      <h2>Notable Changes</h2>
       <ul>
-      <li><b>Response times</b> How long does it take to import a single monster? Does the response times from parsing a page and going to the next when batch-importing feels alright? <strong>Please note that bringing both browser tabs (D&amp;D Beyond and FVTT) into the foreground speeds up processing significantly!</strong>.</li>
-      <li><b>Functionality</b> Does it work at all? If not, was is not working?</li>
+        <li>Microsoft Edge will have the extension available on it's own store once Microsoft's review completes</li>
+        <li>Fixed the Reload bug from the Chrome extension by rewriting most of the underlying code.</li>
+        <li>Six spellcaster are now receiving all of their spells and not only their cantrips, e.g. the <a href="https://www.dndbeyond.com/monsters/evil-mage">Evil Mage</a></li>
+        <li>Improved output on D&amp;D Beyond pages, especially when importing adventures and sourcebooks</li>
+        <li>Monster Manual is now importable and redirects to importing all monsters contained in the Monster Manual</li>
+        <li><a href="https://www.vtta.io/articles/getting-started">Getting Started</a> Guide is available.</li>
+        <li><a href="https://www.vtta.dev/status">Always updated Status</a> page is available.</p>
       </ul>
 
-      <p>Please report your experiences on Discord. I will be available for questions and feedback.</p>
+      <p>With the major roadblocks out of the way, the module that enables you to share your adjustments easily will be released next and a coordinated effort to heavily improve the data will follow.</p>
       
-      <h2>Features: New and/or improved</h2>
-       <ul>
-          <li><b>All Sourcebooks/ Adventures supported</b> - that's a milestone for sure</li>
-          <li><b>Better Token generation</b> - If you have <strong>VTTA Tokens</strong> installed, you will see way better auto-generated tokens from now on. You will need to re-import to update the token images though.</li>
-          <li><b>Easier (and more stable) FVTT connection</b> - Connect to FVTT just by clicking on the browser icon, it will automatically try to connect. <i>A click saved is a click saved</i></li>
-          <li><b>Environment selection</b> - This will be relevant for developers contributing changes, as we will have our own playground to destroy stuff without affecting anyone really</li>
-       </ul>
-
-       <h2>Known issue</h2>
-       <ul>
-        <li><b>Clicking on the browser extension's icon to connect to FVTT reloads the FVTT tab</b> and you are not being able to connect at all.<br/>
-             <b>Workaround:</b> Go to the browser's extension management page (chrome://extensions), search for the VTTA extension and hit the little "Reload"-icon. Refresh the FVTT tab and try to connect.</li>
-
-
-       </ul>
-
-       <h2>Have fun!</h2>
       <hr />
          `,
     {
