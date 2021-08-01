@@ -77,19 +77,6 @@ const processScene = async (scene, sceneUpdatePolicy) => {
     `<p>Map and banner upload successful.</p>`
   );
 
-  // 2. Find the references Journal Entries and
-  //    1. Create/Upload the label images
-  //    2. Position the labels referencing to the Journal Entries on the scene
-  scene.notes = [];
-  let journals = game.journal.filter(
-    (j) => j.data.flags && j.data.flags.vtta && j.data.flags.vtta.id
-  );
-
-  // each note needs a position and a label. This is ensured by the processing instruction for each scene on the parser
-  // let notes = scene.journals.filter(
-  //   (note) => note.x !== undefined && note.y !== undefined && note.label
-  // );
-
   const SCENE_PADDING = {
     left: Math.ceil((0.25 * scene.width) / scene.grid) * scene.grid,
     top: Math.ceil((0.25 * scene.height) / scene.grid) * scene.grid,
@@ -101,7 +88,7 @@ const processScene = async (scene, sceneUpdatePolicy) => {
   // create used labels, and place them if we got x/y coordinates for them
   scene.notes = [];
   let noteIndex = 0;
-  for (let note in scene.journals) {
+  for (let note of scene.journals) {
     const journalEntry = (
       window.vtta.postEightZero ? game.journal.contents : game.journal.entities
     ).find(
@@ -117,12 +104,12 @@ const processScene = async (scene, sceneUpdatePolicy) => {
       const { label, name } = journalEntry.data.flags.vtta;
 
       const iconPath = await Label.create("" + label);
-      let data = {
-        //entryId: journalEntry._id,
-        entryId: id.get(journalEntry),
-        icon: iconPath,
-        iconSize: NOTE_ICON_SIZE,
-      };
+      // let data = {
+      //   //entryId: journalEntry._id,
+      //   entryId: id.get(journalEntry),
+      //   icon: iconPath,
+      //   iconSize: NOTE_ICON_SIZE,
+      // };
       if (positions.length === 0) {
         const data = {
           //entryId: journalEntry._id,
@@ -134,9 +121,8 @@ const processScene = async (scene, sceneUpdatePolicy) => {
         };
         scene.notes.push(data);
       } else {
-        scene.notes = [
-          ...scene.notes,
-          positions.map((position) => {
+        scene.notes.push(
+          ...positions.map((position) => {
             return {
               //entryId: journalEntry._id,
               entryId: id.get(journalEntry),
@@ -144,8 +130,8 @@ const processScene = async (scene, sceneUpdatePolicy) => {
               iconSize: NOTE_ICON_SIZE,
               ...position,
             };
-          }),
-        ];
+          })
+        );
       }
     }
   }
@@ -156,7 +142,7 @@ const processScene = async (scene, sceneUpdatePolicy) => {
   // 4. Create the Scene with the supplied data
   let tokens = [];
 
-  for (let monster in scene.monsters) {
+  for (let monster of scene.monsters) {
     const actor = (
       window.vtta.postEightZero ? game.actors.contents : game.actors.entities
     ).find(

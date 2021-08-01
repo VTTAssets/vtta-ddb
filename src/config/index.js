@@ -19,8 +19,10 @@ const config = {
     },
     extension: {
       default: "CMD_SEND_FOUNDRY_MESSAGE",
+      message: "FVTT_MESSAGE",
       query: "vtta-ddb.query",
       response: "vtta-ddb.available",
+      import: "vtta-ddb.import",
     },
   },
   paths: {
