@@ -8,7 +8,9 @@ const collectSystemData = () => {
       version: game.system.data.version,
     },
     core: {
-      world: game.data.world.data.title,
+      world: window.vtta.postEightZero
+        ? game.data.world.data.title
+        : game.data.world.title,
       version: game.data.version,
     },
     vtta: {
