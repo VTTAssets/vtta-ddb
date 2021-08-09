@@ -1,4 +1,8 @@
-import { slugify, capitalize } from "../../../util/string.js";
+import {
+  slugify,
+  capitalize,
+  semanticVersionCompare,
+} from "../../../util/string.js";
 import { queryCompendium, getCompendium } from "../utilities/compendium.js";
 import { queryWorld } from "../utilities/world.js";
 import { createFolders, getFolder } from "../utilities/folder.js";
@@ -153,117 +157,119 @@ export default async (message) => {
         //delete entity._id;
         entity = id.delete(entity);
 
-        // pre-process Scenes:
-        if (entity.type === "scene") {
-          return limiter.schedule(() =>
-            processScene(entity, sceneUpdatePolicy)
-          );
-        } else {
-          return new Promise((resolve, reject) => {
-            // check if the one exists already
-            const entry = existing.find(
-              (e) => e.flags.vtta.id === entity.flags.vtta.id
+        switch (entity.type) {
+          case "scene":
+            return limiter.schedule(() =>
+              processScene(entity, sceneUpdatePolicy)
             );
-            if (entry !== undefined) {
-              // check if we actually need to do an update
-              // not everything is versioned'ed
-              if (
-                entry.flags &&
-                entry.flags.vtta &&
-                entry.flags.vtta.v &&
-                entity.flags &&
-                entity.flags.vtta &&
-                entity.flags.vtta.v &&
-                entry.flags.vtta.v === entity.flags.vtta.v
-              ) {
-                return resolve(entry);
-              }
-              // updating an existing world entry
-              //  entity._id = entry._id;
-              entity = id.set(entity, id.get(entry));
+          case "npc":
+            // adjust armor ratings on dnd5e system 1.4.0 and after
+            entity.data.attributes.ac.flat = entity.data.attributes.ac.value;
+            break;
+        }
+        return new Promise((resolve, reject) => {
+          // check if the one exists already
+          const entry = existing.find(
+            (e) => e.flags.vtta.id === entity.flags.vtta.id
+          );
+          if (entry !== undefined) {
+            // check if we actually need to do an update
+            // not everything is versioned'ed
+            if (
+              entry.flags &&
+              entry.flags.vtta &&
+              entry.flags.vtta.v &&
+              entity.flags &&
+              entity.flags.vtta &&
+              entity.flags.vtta.v &&
+              entry.flags.vtta.v === entity.flags.vtta.v
+            ) {
+              return resolve(entry);
+            }
+            // updating an existing world entry
+            //  entity._id = entry._id;
+            entity = id.set(entity, id.get(entry));
 
-              // remove any image information from the actor to not overwrite that in future updates
-              if (entry.img) delete entity.img;
+            // remove any image information from the actor to not overwrite that in future updates
+            if (entry.img) delete entity.img;
 
-              if (entry.token && entry.token.img) {
-                delete entity.flags.vtta.token;
-              }
+            if (entry.token && entry.token.img) {
+              delete entity.flags.vtta.token;
+            }
 
-              if (window.vtta.postEightZero) {
-                resolve(
-                  limiter.schedule(() =>
-                    getEntityClass(entity).updateDocuments([entity])
-                  )
-                );
-              } else {
-                resolve(
-                  limiter.schedule(() => getEntityClass(entity).update(entity))
-                );
-              }
+            if (window.vtta.postEightZero) {
+              resolve(
+                limiter.schedule(() =>
+                  getEntityClass(entity).updateDocuments([entity])
+                )
+              );
             } else {
-              getFolder(entity)
-                .then((folder) => {
-                  // entity.folder = folder._id;
-                  entity.folder = id.get(folder);
+              resolve(
+                limiter.schedule(() => getEntityClass(entity).update(entity))
+              );
+            }
+          } else {
+            getFolder(entity)
+              .then((folder) => {
+                // entity.folder = folder._id;
+                entity.folder = id.get(folder);
 
-                  switch (type) {
-                    case "monsters":
-                      {
-                        if (
-                          entity.flags.vtta &&
-                          entity.flags.vtta.token &&
-                          entity.flags.vtta.token.base
-                        ) {
-                          entity.img = entity.flags.vtta.token.base;
-                          delete entity.flags.vtta.token.base;
-                        }
-                        if (!entity.img)
-                          entity.img = window.vtta.postEightZero
-                            ? CONST.DEFAULT_TOKEN
-                            : DEFAULT_TOKEN;
+                switch (type) {
+                  case "monsters":
+                    {
+                      if (
+                        entity.flags.vtta &&
+                        entity.flags.vtta.token &&
+                        entity.flags.vtta.token.base
+                      ) {
+                        entity.img = entity.flags.vtta.token.base;
+                        delete entity.flags.vtta.token.base;
                       }
-
-                      limiter
-                        .schedule(() => getEntityClass(entity).create(entity))
-                        .then((actor) => {
-                          resolve(actor);
-                        });
-                      break;
-                    case "tables":
-                      // We need a description since it's displayed when rolled, otherwise a nasty "undefined" is displayed
-                      if (!entity.description) entity.description = entity.name;
-                      // Default to the vtta.io dice img
-                      entity.img =
-                        "modules/vtta-ddb/img/vtta.io-dice-64x64.png";
-                      resolve(
-                        limiter.schedule(() =>
-                          getEntityClass(entity).create(entity)
-                        )
-                      );
-                      break;
-                    default:
                       if (!entity.img)
                         entity.img = window.vtta.postEightZero
                           ? CONST.DEFAULT_TOKEN
                           : DEFAULT_TOKEN;
-                      resolve(
-                        limiter.schedule(() =>
-                          getEntityClass(entity).create(entity)
-                        )
-                      );
-                  }
-                })
-                .catch((error) => {
-                  logger.error("Error", error);
-                  logger.error(
-                    "Error getting the folder/ creating the entity",
-                    entity
-                  );
-                  logger.error("Error Message", entity);
-                });
-            }
-          });
-        }
+                    }
+
+                    limiter
+                      .schedule(() => getEntityClass(entity).create(entity))
+                      .then((actor) => {
+                        resolve(actor);
+                      });
+                    break;
+                  case "tables":
+                    // We need a description since it's displayed when rolled, otherwise a nasty "undefined" is displayed
+                    if (!entity.description) entity.description = entity.name;
+                    // Default to the vtta.io dice img
+                    entity.img = "modules/vtta-ddb/img/vtta.io-dice-64x64.png";
+                    resolve(
+                      limiter.schedule(() =>
+                        getEntityClass(entity).create(entity)
+                      )
+                    );
+                    break;
+                  default:
+                    if (!entity.img)
+                      entity.img = window.vtta.postEightZero
+                        ? CONST.DEFAULT_TOKEN
+                        : DEFAULT_TOKEN;
+                    resolve(
+                      limiter.schedule(() =>
+                        getEntityClass(entity).create(entity)
+                      )
+                    );
+                }
+              })
+              .catch((error) => {
+                logger.error("Error", error);
+                logger.error(
+                  "Error getting the folder/ creating the entity",
+                  entity
+                );
+                logger.error("Error Message", entity);
+              });
+          }
+        });
       })
     );
   }
