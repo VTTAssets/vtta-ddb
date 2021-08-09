@@ -1,0 +1,13 @@
+name: FVTT Release Packager
+on:
+  release:
+    types: [released]
+
+jobs:
+  create-release-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: VTTAssets/fvtt-release-packager@v1.0.3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
